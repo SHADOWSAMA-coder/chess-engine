@@ -27,13 +27,15 @@ enum Color {
 
 struct Board {
     uint64_t bitboard[2][6] = {0};
-    long long move_count{0};
+    char turn{'w'};
+    long long half_moves{0};
+    long long full_moves{1};
     unsigned int castling_state : 4;
     int en_passant_index{0};
     int WhiteKingSq{0};
     int BlackKingSq{0};
 
-    Board();
+    Board(const std::string& fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     uint64_t get_bitboard(Color color, Piece piece) const;
     bool is_occupied(ChessBoard index, uint64_t& board);

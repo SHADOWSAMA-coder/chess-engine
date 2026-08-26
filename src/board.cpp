@@ -1,22 +1,70 @@
 #include "board.h"
 #include <iostream>
 #include <stdexcept>
+#include <string> 
+#include <cctype> 
+#include <sstream>
 
 // Constructor Implementation
-Board::Board() {
-    bitboard[WHITE][PAWN]   = 0x000000000000FF00ULL;
-    bitboard[WHITE][ROOK]   = 0x0000000000000081ULL;
-    bitboard[WHITE][KNIGHT] = 0x0000000000000042ULL;
-    bitboard[WHITE][BISHOP] = 0x0000000000000024ULL;
-    bitboard[WHITE][QUEEN]  = 0x0000000000000008ULL;
-    bitboard[WHITE][KING]   = 0x0000000000000010ULL;
+Board::Board(const std::string& fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
+    castling_state=0;
+    en_passant_index=-1;
+    std::stringstream ss(fen);
+    std::string piece_pos,curr_color,castling,en_passant,half_m,full_m;
+    ss >> piece_pos >> curr_color >> castling >> en_passant >> half_m >> full_m;
 
-    bitboard[BLACK][PAWN]   = 0x00FF000000000000ULL;
-    bitboard[BLACK][ROOK]   = 0x8100000000000000ULL;
-    bitboard[BLACK][KNIGHT] = 0x4200000000000000ULL;
-    bitboard[BLACK][BISHOP] = 0x2400000000000000ULL;
-    bitboard[BLACK][QUEEN]  = 0x0800000000000000ULL;
-    bitboard[BLACK][KING]   = 0x1000000000000000ULL;
+    int rank =7;
+    int file =0;
+    for (char c :piece_pos){
+        if (c == '/'){
+            rank--;
+            file =0;
+        }else if (std::isdigit(c)){
+            file += (c - '0');
+        }else {
+            Color color = std::isupper(c) ? WHITE : BLACK;
+            Piece piece;
+            char lower_c = std::tolower(c);
+            if (lower_c == 'p')piece = PAWN;
+            else if (lower_c == 'r')piece = ROOK;
+            else if(lower_c == 'n')piece = KNIGHT;
+            else if(lower_c == 'b')piece = BISHOP;
+            else if(lower_c == 'q')piece = QUEEN;
+            else if(lower_c == 'k'){
+                piece = KING;
+                if (color == WHITE) WhiteKingSq = rank*8 + file;
+                else BlackKingSq = rank*8 + file;
+            }
+            int idx = rank*8 + file;
+            set_piece(static_cast<ChessBoard>(idx),bitboard[color][piece]);
+            file++;
+        }
+    }
+    if (!curr_color.empty()){
+        turn = curr_color[0];
+    }
+    
+    for (char c:castling){
+        if (c == '-')break;
+        if(c == 'K') castling_state |= (1<<3);
+        if(c == 'Q')castling_state |= (1 <<2);
+        if(c == 'k')castling_state |= (1<<1);
+        if(c == 'q')castling_state |= 1;
+    }
+
+    if (!en_passant.empty() && en_passant!="-"){
+        int ep_file = en_passant[0] - 'a';
+        int ep_rank = en_passant[1] - '1';
+        en_passant_index = ep_rank*8 + ep_file;
+    }
+
+    try {
+        if (!half_m.empty()) half_moves = std::stoll(half_m);
+        if (!full_m.empty()) full_moves = std::stoll(full_m);
+    }catch (...){
+        half_moves = 0;
+        full_moves = 1;
+    }
 }
 
 
