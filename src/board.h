@@ -44,4 +44,7 @@ struct Board {
 
     //This is for current state anytime you want 
     void display(Color color, Piece piece) const;
+
+    //To find a piece if it is present or not 
+    bool find_piece(ChessBoard index,Color color,Piece piece);
 };

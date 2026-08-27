@@ -103,3 +103,8 @@ void Board::display(Color color, Piece piece) const {
     }
     std::cout << '\n';
 }
+
+bool Board::find_piece(ChessBoard index,Color color,Piece piece) {
+    uint64_t board = get_bitboard(color,piece);
+    return is_occupied(index,board);
+}
