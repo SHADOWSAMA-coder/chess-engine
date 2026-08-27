@@ -17,11 +17,11 @@ enum ChessBoard {
 };
 
 enum Piece {
-    PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING
+    PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING, EMPTY_PIECE
 };
 
 enum Color {
-    WHITE, BLACK
+    WHITE, BLACK, EMPTY_COLOR
 };
 
 
@@ -43,8 +43,8 @@ struct Board {
     void clear_piece(ChessBoard index, uint64_t& board);
 
     //This is for current state anytime you want 
-    void display(Color color, Piece piece) const;
+    void display(std::string mode = "display");
 
-    //To find a piece if it is present or not 
-    bool find_piece(ChessBoard index,Color color,Piece piece);
+    //This function takes an index and returns the piece on that square
+    std::pair<Color,Piece> find_piece_given_square(int index);
 };

@@ -4,9 +4,11 @@
 #include <string> 
 #include <cctype> 
 #include <sstream>
+#include  <map>
+#include <utility>
 
 // Constructor Implementation
-Board::Board(const std::string& fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
+Board::Board(const std::string& fen) {
     castling_state=0;
     en_passant_index=-1;
     std::stringstream ss(fen);
@@ -36,7 +38,7 @@ Board::Board(const std::string& fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB
                 else BlackKingSq = rank*8 + file;
             }
             int idx = rank*8 + file;
-            set_piece(static_cast<ChessBoard>(idx),bitboard[color][piece]);
+            bitboard[color][piece] |= (1ULL << idx);
             file++;
         }
     }
@@ -46,7 +48,7 @@ Board::Board(const std::string& fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB
     
     for (char c:castling){
         if (c == '-')break;
-        if(c == 'K') castling_state |= (1<<3);
+        if(c == 'K')castling_state |= (1<<3);
         if(c == 'Q')castling_state |= (1 <<2);
         if(c == 'k')castling_state |= (1<<1);
         if(c == 'q')castling_state |= 1;
@@ -88,23 +90,52 @@ void Board::clear_piece(ChessBoard index, uint64_t& board) {
     board &= ~(1ULL << index);
 }
 
-void Board::display(Color color, Piece piece) const {
-    uint64_t board = get_bitboard(color, piece);
-    for (int i = 8; i > 0; --i) {
-        for (int j = 0; j < 8; j++) {
-            int sq = (i - 1) * 8 + j;
-            if ((board & (1ULL << sq)) != 0) {
-                std::cout << 1;
-            } else {
-                std::cout << '.';
+void Board::display(std::string mode) {
+    std::map<std::pair<Color,Piece>,char> keys{
+        {{WHITE, PAWN}, 'P'},
+        {{WHITE, KNIGHT}, 'N'},
+        {{WHITE, BISHOP}, 'B'},
+        {{WHITE, ROOK}, 'R'},
+        {{WHITE, QUEEN}, 'Q'},
+        {{WHITE, KING}, 'K'},
+        {{BLACK, PAWN}, 'p'},
+        {{BLACK, KNIGHT}, 'n'},
+        {{BLACK, BISHOP}, 'b'},
+        {{BLACK, ROOK}, 'r'},
+        {{BLACK, QUEEN}, 'q'},
+        {{BLACK, KING}, 'k'}
+    };
+    if (mode == "display"){
+        for (int i = 8; i > 0; --i) {
+            for (int j = 0; j < 8; j++) {
+                int sq = (i - 1) * 8 + j;
+                std::pair<Color,Piece> piece_info = find_piece_given_square(sq);
+                if (piece_info.first==Color::EMPTY_COLOR || piece_info.second==Piece::EMPTY_PIECE){
+                    std::cout << '.';
+                }else{
+                    std::cout << keys[piece_info];
+                }
             }
+            std::cout << '\n';
         }
         std::cout << '\n';
     }
-    std::cout << '\n';
 }
 
-bool Board::find_piece(ChessBoard index,Color color,Piece piece) {
-    uint64_t board = get_bitboard(color,piece);
-    return is_occupied(index,board);
+std::pair<Color,Piece> Board::find_piece_given_square(int index){
+    for (int i=0;i<2;i++){
+        for (int j=0;j<6;j++){
+            uint64_t board = get_bitboard(static_cast<Color>(i),static_cast<Piece>(j));
+            if (board & (1ULL << index)){
+                return {static_cast<Color>(i),static_cast<Piece>(j)};
+            }
+        }
+    }
+    return std::pair(Color::EMPTY_COLOR,Piece::EMPTY_PIECE);
+}
+
+int main(){
+    Board board("r1bq1rk1/pp2bppp/2n1pn2/2pp4/3P4/2N1PN2/PPPB1PPP/R2QKB1R w KQ - 3 7");
+    board.display();
+    return 0;
 }
